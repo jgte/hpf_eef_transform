@@ -1,14 +1,7 @@
 #!/bin/bash
 
-DIR=$(cd $(dirname $BASH_SOURCE);pwd)
-APPDIR=$($DIR/dockerize.sh app-dir)
-IODIR=$($DIR/dockerize.sh io-dir)
-
-if [ $# -eq 0 ]
-then
-  $BASH_SOURCE help
-  exit
-fi
+APPDIR=/hpf_eef_transform
+IODIR=/iodir
 
 case "$1" in
   sh) #run the shell instead of an app
@@ -18,29 +11,21 @@ case "$1" in
     grep ') #' $BASH_SOURCE \
       | grep -v grep \
       | grep -v sed \
-      | sed 's_) #_ : _g' \
-      | column -t -s\:
+      | sed 's_) #_ : _g'
   ;;
-  apps) #slows all avalable apps
-    find $APPDIR -name \*sh -or -name \*py
+  test) #call the check_eef_transform.sh script to test the data extraction
+    exec $APPDIR/check_eef_transform.sh
   ;;
-  test-*) #tests an app; some may not yet have a test
-    exec $APPDIR/test/${1%.sh}.sh --outdir $IODIR ${@:2}
-  ;;
-  example-*) #shows the test script of an app
-    exec cat $APPDIR/test/test-${1/example-}
+  extract) #extract a file, arguments after 'extract' are passed to hpf_eef_transform.pl
+    exec $APPDIR/hpf_eef_transform.pl --output=$IODIR --verbose ${@:2}
   ;;
   help) #show the help string
     echo "\
 Possible arguments:
-- mode
-- app-name app-args
+- modes [arguments]
 
 mode is one of:
 $($BASH_SOURCE modes)
-
-app-name is one of:
-$($BASH_SOURCE apps)
 
 Any sequence of commands that does not start with one of the modes is passed transparently to the container.
 "
